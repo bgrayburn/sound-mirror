@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sound Mirror</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.11.3/lib/p5.min.js" defer></script>
+    <script src="sketch.js" defer></script>
+  </head>
+  <body>
+    <main id="app"></main>
+    <section id="controls" aria-label="Sound Mirror controls">
+      <div class="panel-header">
+        <h1>Sound Mirror</h1>
+        <button id="toggle-controls" type="button" aria-expanded="true" aria-controls="control-body">Hide controls</button>
+      </div>
+      <div id="control-body">
+      <p>Bright regions become voices. Color sets pitch; brightness sets volume.</p>
+      <div class="actions">
+        <button id="start" type="button" disabled>Loading OpenCV…</button>
+        <button id="mute" type="button" disabled aria-pressed="false">Mute</button>
+      </div>
+      <label for="camera">Camera</label>
+      <select id="camera">
+        <option value="user">Front</option>
+        <option value="environment">Rear</option>
+      </select>
+      <p id="camera-error" class="hint" role="status"></p>
+      <label for="threshold">Brightness threshold <output id="threshold-value">160</output></label>
+      <input id="threshold" type="range" min="0" max="255" value="160" />
+      <label for="min-size">Minimum blob size <output id="min-size-value">80 px</output></label>
+      <input id="min-size" type="range" min="10" max="2000" step="10" value="80" />
+      <label for="max-blobs">Max blobs <output id="max-blobs-value">32</output></label>
+      <input id="max-blobs" type="range" min="1" max="256" step="1" value="32" />
+      <label for="preview">Preview</label>
+      <select id="preview">
+        <option value="webcam">Webcam</option>
+        <option value="threshold">Threshold (white = detected bright pixels)</option>
+      </select>
+      <label class="checkbox" for="show-masks">
+        <input id="show-masks" type="checkbox" checked /> Show detected blob masks
+      </label>
+      <p class="hint">Green shading shows the exact pixels used for sound. If white regions join in the threshold view, they form one blob. Try raising the threshold to separate them.</p>
+      <p class="hint">Size is measured in the 320 × 240 analysis image. Gray and white regions use 440 Hz.</p>
+      <p id="diagnostics" class="hint"></p>
+      <p id="status" role="status">Loading computer vision…</p>
+      </div>
+    </section>
+  </body>
+</html>
