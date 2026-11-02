@@ -52,7 +52,7 @@ brightness threshold and minimum blob size. **Mute** leaves the visual analysis
 running.
 The default brightness threshold is 130 and minimum blob size is 240 pixels.
 
-Toggle **Reverb** to add a room-like decay (off by default). **Reverb amount**
+Toggle **Reverb** to add a room-like decay (on by default). **Reverb amount**
 sets the added wet level from 0–100% (default 70%), leaving the direct sound
 unchanged. **Room size** sets decay length from 0.2–5 seconds (default 3 seconds),
 not a physical room measurement. Changes apply when the slider is released,

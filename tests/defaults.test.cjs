@@ -17,6 +17,8 @@ for (const [id, value, label] of [
   });
 }
 
-test("reverb stays off by default", () => {
-  assert.match(html, /<button id="reverb"[^>]*aria-pressed="false"/);
+test("reverb is on by default in the UI and audio state", () => {
+  assert.match(html, /<button id="reverb"[^>]*aria-pressed="true"/);
+  const script = readFileSync(require.resolve("../sketch.js"), "utf8");
+  assert.match(script, /let reverbEnabled = true;/);
 });

@@ -109,7 +109,7 @@ new p5((p) => {
   let master;
   let mix;
   let reverbGain;
-  let reverbEnabled = false;
+  let reverbEnabled = true;
   const reverbPaths = new Set();
   let muted = false;
   let running = false;
