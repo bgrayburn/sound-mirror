@@ -44,9 +44,13 @@ tracking ID, target frequency, and normalized intensity. Controls adjust the
 brightness threshold and minimum blob size. **Mute** leaves the visual analysis
 running.
 
-Toggle **Reverb** to add a soft, two-second room-like decay (off by default).
+Toggle **Reverb** to add a room-like decay (off by default). **Reverb amount**
+sets the added wet level from 0–100% (default 30%), leaving the direct sound
+unchanged. **Room size** sets decay length from 0.2–5 seconds (default 2 seconds),
+not a physical room measurement. Changes apply when the slider is released,
+crossfading between room responses. Both sliders can be set before starting.
 The effect fades in and out smoothly, and **Mute** silences both the direct
-sound and the reverb tail.
+sound and the reverb tail. Longer rooms use more audio processing and memory.
 
 ## Inspecting blob detection
 
