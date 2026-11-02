@@ -39,6 +39,13 @@ webcams generally do not offer a rear-facing camera.
   lost voices. Touching regions merge; splits and large movements may create new
   voices. Hidden tabs silence their voices.
 
+Each new voice has a fixed ADSR envelope: 100 ms attack, 250 ms decay, then
+70% sustain while its blob stays visible. Brightness and high-note softening
+control volume independently of the envelope. Brief detection gaps retain the
+voice for up to 200 ms without retriggering; after that it releases over 600 ms.
+Disappearing during attack or decay releases smoothly from the current level.
+Reappearing after release begins creates a new note. Reverb can extend the tail.
+
 The front-camera preview is mirrored. Green outlines and labels show each selected region's
 tracking ID, target frequency, and normalized intensity. Controls adjust the
 brightness threshold and minimum blob size. **Mute** leaves the visual analysis

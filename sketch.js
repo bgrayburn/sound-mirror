@@ -1,6 +1,32 @@
 const ANALYSIS_WIDTH = 320;
 const ANALYSIS_HEIGHT = 240;
 const FALLBACK_FREQUENCY = 220;
+const VOICE_ENVELOPE = { attack: 0.1, decay: 0.25, sustain: 0.7, release: 0.6 };
+
+function envelopeLevel(startedAt, now) {
+  const elapsed = Math.max(0, now - startedAt);
+  const { attack, decay, sustain } = VOICE_ENVELOPE;
+  if (elapsed < attack) return elapsed / attack;
+  if (elapsed < attack + decay) return 1 - (1 - sustain) * (elapsed - attack) / decay;
+  return sustain;
+}
+
+function startEnvelope(parameter, now) {
+  const { attack, decay, sustain } = VOICE_ENVELOPE;
+  parameter.setValueAtTime(0, now);
+  parameter.linearRampToValueAtTime(1, now + attack);
+  parameter.linearRampToValueAtTime(sustain, now + attack + decay);
+}
+
+function releaseEnvelope(parameter, startedAt, now) {
+  // Calculate the held value explicitly for browsers without cancelAndHoldAtTime.
+  const level = envelopeLevel(startedAt, now);
+  parameter.cancelScheduledValues(now);
+  parameter.setValueAtTime(level, now);
+  const end = now + VOICE_ENVELOPE.release;
+  parameter.linearRampToValueAtTime(0, end);
+  return end;
+}
 
 // OpenCV's script and its WebAssembly runtime finish loading separately.
 async function loadOpenCV() {
@@ -406,18 +432,23 @@ new p5((p) => {
     }
   }
 
-  function createVoice() {
+  function createVoice(frequency) {
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
+    const envelope = audio.createGain();
+    const startedAt = audio.currentTime;
     gain.gain.value = 0;
     oscillator.type = "sine";
-    oscillator.connect(gain).connect(mix);
-    const voice = { oscillator, gain, releasing: false };
+    oscillator.frequency.value = frequency;
+    startEnvelope(envelope.gain, startedAt);
+    oscillator.connect(gain).connect(envelope).connect(mix);
+    const voice = { oscillator, gain, envelope, startedAt, releasing: false };
     voices.add(voice);
     updateMasterGain();
     oscillator.onended = () => {
       oscillator.disconnect();
       gain.disconnect();
+      envelope.disconnect();
       voices.delete(voice);
       updateMasterGain();
     };
@@ -428,8 +459,8 @@ new p5((p) => {
   function releaseVoice(voice) {
     if (voice.releasing) return;
     voice.releasing = true;
-    voice.gain.gain.setTargetAtTime(0, audio.currentTime, 0.04);
-    voice.oscillator.stop(audio.currentTime + 0.25);
+    const end = releaseEnvelope(voice.envelope.gain, voice.startedAt, audio.currentTime);
+    voice.oscillator.stop(end + 0.02);
   }
 
   function updateTracks(blobs) {
@@ -449,15 +480,14 @@ new p5((p) => {
     const now = performance.now();
     const next = blobs.map((blob, index) => {
       const old = matches.get(index);
-      const track = { ...blob, id: old?.id ?? nextTrackId++, voice: old?.voice ?? createVoice(), seen: now };
+      const track = { ...blob, id: old?.id ?? nextTrackId++, voice: old?.voice ?? createVoice(blob.frequency), seen: now };
       track.voice.oscillator.frequency.setTargetAtTime(blob.frequency, audio.currentTime, 0.08);
       track.voice.gain.gain.setTargetAtTime(softenedAmplitude(blob.magnitude, blob.frequency), audio.currentTime, 0.06);
       return track;
     });
     for (const track of tracks) {
       if (matchedTracks.has(track)) continue;
-      track.voice.gain.gain.setTargetAtTime(0, audio.currentTime, 0.04);
-      // A short grace period allows a temporarily missing blob to retain its voice.
+      // Hold through brief detection flicker before beginning the release.
       if (now - track.seen < 200 && next.length < maxBlobs) next.push(track);
       else releaseVoice(track.voice);
     }
@@ -478,6 +508,7 @@ new p5((p) => {
       if (!voice.releasing) voice.oscillator.stop();
       voice.oscillator.disconnect();
       voice.gain.disconnect();
+      voice.envelope.disconnect();
     }
     voices.clear();
     for (const path of reverbPaths) {
