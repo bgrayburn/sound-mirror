@@ -24,11 +24,15 @@ webcams generally do not offer a rear-facing camera.
 - Measure hue from the original, unblurred pixels within each region. Ignore
   pixels below 12% saturation and circular-average the remaining hues, weighted
   by saturation; white highlights no longer wash out colorful pixels. Map hue
-  logarithmically from 110 to 1,760 Hz. Regions with too little usable color
+  logarithmically from 55 to 880 Hz. Regions with too little usable color
   (average saturation contribution below 1%) or conflicting hues with no clear
-  direction use 440 Hz, as do gray and white regions.
+  direction use 220 Hz, as do gray and white regions. This range is one octave
+  lower than the original mapping for a softer sound.
 - Set each sine oscillator's amplitude to the region's original mean grayscale
   intensity divided by 255: the intensity integral divided by region size.
+  Gently reduce higher notes by 3 dB per octave above 220 Hz (half amplitude
+  at 880 Hz); lower notes keep their original level. On-screen percentages
+  still show measured brightness, before this softening.
   Area does not otherwise affect volume. Master gain and a compressor keep the
   combined signal controlled.
 - Match nearby blobs across frames; smooth pitch and amplitude changes and fade
