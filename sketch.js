@@ -65,6 +65,9 @@ new p5((p) => {
   let mats;
   let audio;
   let master;
+  let mix;
+  let reverbGain;
+  let reverbEnabled = false;
   let muted = false;
   let running = false;
   let failed = false;
@@ -104,7 +107,7 @@ new p5((p) => {
       toggleControls.setAttribute("aria-expanded", String(!collapsed));
       toggleControls.textContent = collapsed ? "Show controls" : "Hide controls";
     });
-    for (const id of ["start", "mute", "status", "camera", "camera-error", "threshold", "min-size", "max-blobs", "preview", "show-masks", "diagnostics"]) {
+    for (const id of ["start", "mute", "reverb", "status", "camera", "camera-error", "threshold", "min-size", "max-blobs", "preview", "show-masks", "diagnostics"]) {
       ui[id] = document.getElementById(id);
     }
     for (const id of ["threshold", "min-size", "max-blobs"]) {
@@ -125,6 +128,11 @@ new p5((p) => {
       updateMasterGain();
       ui.mute.textContent = muted ? "Unmute" : "Mute";
       ui.mute.setAttribute("aria-pressed", String(muted));
+    });
+    ui.reverb.addEventListener("click", () => {
+      reverbEnabled = !reverbEnabled;
+      reverbGain.gain.setTargetAtTime(reverbEnabled ? 0.3 : 0, audio.currentTime, 0.05);
+      ui.reverb.setAttribute("aria-pressed", String(reverbEnabled));
     });
     document.addEventListener("visibilitychange", () => {
       if (!audio) return;
@@ -228,6 +236,21 @@ new p5((p) => {
       await audio.resume();
       master = audio.createGain();
       master.gain.value = muted ? 0 : 0.88 / maxBlobs;
+      mix = audio.createGain();
+      const reverb = audio.createConvolver();
+      // Generate a stereo room response locally; no audio download is needed.
+      const impulse = audio.createBuffer(2, Math.ceil(audio.sampleRate * 2), audio.sampleRate);
+      for (let channel = 0; channel < impulse.numberOfChannels; channel++) {
+        const samples = impulse.getChannelData(channel);
+        for (let i = 0; i < samples.length; i++) {
+          samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / samples.length, 3);
+        }
+      }
+      reverb.buffer = impulse;
+      reverbGain = audio.createGain();
+      reverbGain.gain.value = reverbEnabled ? 0.3 : 0;
+      mix.connect(master);
+      mix.connect(reverb).connect(reverbGain).connect(master);
       const limiter = audio.createDynamicsCompressor();
       limiter.threshold.value = -6;
       limiter.ratio.value = 12;
@@ -247,6 +270,7 @@ new p5((p) => {
       failed = false;
       ui.start.textContent = "Camera active";
       ui.mute.disabled = false;
+      ui.reverb.disabled = false;
     } catch (error) {
       cleanup();
       ui.start.disabled = false;
@@ -342,7 +366,7 @@ new p5((p) => {
     const gain = audio.createGain();
     gain.gain.value = 0;
     oscillator.type = "sine";
-    oscillator.connect(gain).connect(master);
+    oscillator.connect(gain).connect(mix);
     const voice = { oscillator, gain, releasing: false };
     voices.add(voice);
     updateMasterGain();
@@ -413,6 +437,7 @@ new p5((p) => {
     voices.clear();
     if (audio && audio.state !== "closed") audio.close();
     ui.mute.disabled = true;
+    ui.reverb.disabled = true;
   }
 
   p.draw = () => {
