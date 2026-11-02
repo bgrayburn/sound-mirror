@@ -58,6 +58,17 @@ function blobToFrequency(pixels, labels, label) {
   return 110 * Math.pow(1760 / 110, hue);
 }
 
+function createReverbImpulse(audio, seconds) {
+  const impulse = audio.createBuffer(2, Math.ceil(audio.sampleRate * seconds), audio.sampleRate);
+  for (let channel = 0; channel < impulse.numberOfChannels; channel++) {
+    const samples = impulse.getChannelData(channel);
+    for (let i = 0; i < samples.length; i++) {
+      samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / samples.length, 3);
+    }
+  }
+  return impulse;
+}
+
 new p5((p) => {
   let cv;
   let capture;
@@ -68,6 +79,7 @@ new p5((p) => {
   let mix;
   let reverbGain;
   let reverbEnabled = false;
+  const reverbPaths = new Set();
   let muted = false;
   let running = false;
   let failed = false;
@@ -107,7 +119,7 @@ new p5((p) => {
       toggleControls.setAttribute("aria-expanded", String(!collapsed));
       toggleControls.textContent = collapsed ? "Show controls" : "Hide controls";
     });
-    for (const id of ["start", "mute", "reverb", "status", "camera", "camera-error", "threshold", "min-size", "max-blobs", "preview", "show-masks", "diagnostics"]) {
+    for (const id of ["start", "mute", "reverb", "reverb-amount", "room-size", "status", "camera", "camera-error", "threshold", "min-size", "max-blobs", "preview", "show-masks", "diagnostics"]) {
       ui[id] = document.getElementById(id);
     }
     for (const id of ["threshold", "min-size", "max-blobs"]) {
@@ -131,8 +143,18 @@ new p5((p) => {
     });
     ui.reverb.addEventListener("click", () => {
       reverbEnabled = !reverbEnabled;
-      reverbGain.gain.setTargetAtTime(reverbEnabled ? 0.3 : 0, audio.currentTime, 0.05);
+      updateReverbAmount();
       ui.reverb.setAttribute("aria-pressed", String(reverbEnabled));
+    });
+    ui["reverb-amount"].addEventListener("input", () => {
+      document.getElementById("reverb-amount-value").value = `${ui["reverb-amount"].value}%`;
+      updateReverbAmount();
+    });
+    ui["room-size"].addEventListener("input", () => {
+      document.getElementById("room-size-value").value = `${Number(ui["room-size"].value).toFixed(1)} s`;
+    });
+    ui["room-size"].addEventListener("change", () => {
+      if (audio && audio.state !== "closed") replaceReverbRoom();
     });
     document.addEventListener("visibilitychange", () => {
       if (!audio) return;
@@ -159,6 +181,33 @@ new p5((p) => {
     // Include fading voices so reducing the limit cannot boost their whole mix.
     const gain = muted ? 0 : 0.88 / Math.max(maxBlobs, voices.size);
     master.gain.setTargetAtTime(gain, audio.currentTime, 0.05);
+  }
+
+  function updateReverbAmount() {
+    if (!reverbGain || !audio || audio.state === "closed") return;
+    reverbGain.gain.setTargetAtTime(reverbEnabled ? Number(ui["reverb-amount"].value) / 100 : 0, audio.currentTime, 0.05);
+  }
+
+  function replaceReverbRoom() {
+    const convolver = audio.createConvolver();
+    convolver.buffer = createReverbImpulse(audio, Number(ui["room-size"].value));
+    const gain = audio.createGain();
+    gain.gain.value = reverbPaths.size ? 0 : 1;
+    const source = mix;
+    source.connect(convolver).connect(gain).connect(reverbGain);
+    // Crossfade room responses instead of replacing a live convolver's buffer.
+    for (const path of reverbPaths) {
+      if (path.timer) continue;
+      path.gain.gain.setTargetAtTime(0, audio.currentTime, 0.03);
+      path.timer = setTimeout(() => {
+        source.disconnect(path.convolver);
+        path.convolver.disconnect();
+        path.gain.disconnect();
+        reverbPaths.delete(path);
+      }, 250);
+    }
+    reverbPaths.add({ convolver, gain, timer: null });
+    gain.gain.setTargetAtTime(1, audio.currentTime, 0.03);
   }
 
   async function openCamera(facing) {
@@ -237,20 +286,11 @@ new p5((p) => {
       master = audio.createGain();
       master.gain.value = muted ? 0 : 0.88 / maxBlobs;
       mix = audio.createGain();
-      const reverb = audio.createConvolver();
-      // Generate a stereo room response locally; no audio download is needed.
-      const impulse = audio.createBuffer(2, Math.ceil(audio.sampleRate * 2), audio.sampleRate);
-      for (let channel = 0; channel < impulse.numberOfChannels; channel++) {
-        const samples = impulse.getChannelData(channel);
-        for (let i = 0; i < samples.length; i++) {
-          samples[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / samples.length, 3);
-        }
-      }
-      reverb.buffer = impulse;
       reverbGain = audio.createGain();
-      reverbGain.gain.value = reverbEnabled ? 0.3 : 0;
+      reverbGain.gain.value = reverbEnabled ? Number(ui["reverb-amount"].value) / 100 : 0;
       mix.connect(master);
-      mix.connect(reverb).connect(reverbGain).connect(master);
+      reverbGain.connect(master);
+      replaceReverbRoom();
       const limiter = audio.createDynamicsCompressor();
       limiter.threshold.value = -6;
       limiter.ratio.value = 12;
@@ -435,6 +475,13 @@ new p5((p) => {
       voice.gain.disconnect();
     }
     voices.clear();
+    for (const path of reverbPaths) {
+      clearTimeout(path.timer);
+      mix.disconnect(path.convolver);
+      path.convolver.disconnect();
+      path.gain.disconnect();
+    }
+    reverbPaths.clear();
     if (audio && audio.state !== "closed") audio.close();
     ui.mute.disabled = true;
     ui.reverb.disabled = true;

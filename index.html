@@ -6,7 +6,7 @@
     <title>Sound Mirror</title>
     <link rel="stylesheet" href="style.css?v=2" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.11.3/lib/p5.min.js" defer></script>
-    <script src="sketch.js?v=3" defer></script>
+    <script src="sketch.js?v=4" defer></script>
   </head>
   <body>
     <main id="app"></main>
@@ -22,6 +22,11 @@
         <button id="mute" type="button" disabled aria-pressed="false">Mute</button>
         <button id="reverb" type="button" disabled aria-pressed="false">Reverb</button>
       </div>
+      <label for="reverb-amount">Reverb amount <output id="reverb-amount-value">30%</output></label>
+      <input id="reverb-amount" type="range" min="0" max="100" step="1" value="30" />
+      <label for="room-size">Room size <output id="room-size-value">2.0 s</output></label>
+      <input id="room-size" type="range" min="0.2" max="5" step="0.1" value="2" />
+      <p class="hint">Amount adds reverb to the direct sound. Room size sets the decay length; applied when you release the slider. Enable Reverb to hear the effect.</p>
       <label for="camera">Camera</label>
       <select id="camera">
         <option value="user">Front</option>
