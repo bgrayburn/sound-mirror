@@ -19,7 +19,7 @@ webcams generally do not offer a rear-facing camera.
 - Analyze webcam frames at 320 × 240, up to 20 times per second.
 - Grayscale, blur, and threshold the image; identify 8-connected bright regions.
 - Ignore regions smaller than the minimum pixel count; play the largest regions
-  up to **Max blobs** (1–256, default 32). The slider updates live. High limits
+  up to **Max blobs** (1–256, default 80). The slider updates live. High limits
   may reduce processing speed, especially on mobile devices.
 - Measure hue from the original, unblurred pixels within each region. Ignore
   pixels below 12% saturation and circular-average the remaining hues, weighted
@@ -50,10 +50,11 @@ The front-camera preview is mirrored. Green outlines and labels show each select
 tracking ID, target frequency, and normalized intensity. Controls adjust the
 brightness threshold and minimum blob size. **Mute** leaves the visual analysis
 running.
+The default brightness threshold is 130 and minimum blob size is 240 pixels.
 
-Toggle **Reverb** to add a room-like decay (off by default). **Reverb amount**
-sets the added wet level from 0–100% (default 30%), leaving the direct sound
-unchanged. **Room size** sets decay length from 0.2–5 seconds (default 2 seconds),
+Toggle **Reverb** to add a room-like decay (on by default). **Reverb amount**
+sets the added wet level from 0–100% (default 70%), leaving the direct sound
+unchanged. **Room size** sets decay length from 0.2–5 seconds (default 3 seconds),
 not a physical room measurement. Changes apply when the slider is released,
 crossfading between room responses. Both sliders can be set before starting.
 The effect fades in and out smoothly, and **Mute** silences both the direct
