@@ -116,7 +116,7 @@ new p5((p) => {
   let failed = false;
   let activeFacing = "user";
   let mirrored = true;
-  let maxBlobs = 32;
+  let maxBlobs;
   let tracks = [];
   let nextTrackId = 1;
   let lastFrame = -1;
@@ -153,6 +153,7 @@ new p5((p) => {
     for (const id of ["start", "mute", "reverb", "reverb-amount", "room-size", "status", "camera", "camera-error", "threshold", "min-size", "max-blobs", "preview", "show-masks", "diagnostics"]) {
       ui[id] = document.getElementById(id);
     }
+    maxBlobs = Number(ui["max-blobs"].value);
     for (const id of ["threshold", "min-size", "max-blobs"]) {
       ui[id].addEventListener("input", () => {
         document.getElementById(`${id}-value`).value = ui[id].value + (id === "min-size" ? " px" : "");

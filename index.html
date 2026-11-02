@@ -6,7 +6,7 @@
     <title>Sound Mirror</title>
     <link rel="stylesheet" href="style.css?v=2" />
     <script src="https://cdn.jsdelivr.net/npm/p5@1.11.3/lib/p5.min.js" defer></script>
-    <script src="sketch.js?v=envelope-1" defer></script>
+    <script src="sketch.js?v=defaults-1" defer></script>
   </head>
   <body>
     <main id="app"></main>
@@ -22,10 +22,10 @@
         <button id="mute" type="button" disabled aria-pressed="false">Mute</button>
         <button id="reverb" type="button" disabled aria-pressed="false">Reverb</button>
       </div>
-      <label for="reverb-amount">Reverb amount <output id="reverb-amount-value">30%</output></label>
-      <input id="reverb-amount" type="range" min="0" max="100" step="1" value="30" />
-      <label for="room-size">Room size <output id="room-size-value">2.0 s</output></label>
-      <input id="room-size" type="range" min="0.2" max="5" step="0.1" value="2" />
+      <label for="reverb-amount">Reverb amount <output id="reverb-amount-value">70%</output></label>
+      <input id="reverb-amount" type="range" min="0" max="100" step="1" value="70" />
+      <label for="room-size">Room size <output id="room-size-value">3.0 s</output></label>
+      <input id="room-size" type="range" min="0.2" max="5" step="0.1" value="3" />
       <p class="hint">Amount adds reverb to the direct sound. Room size sets the decay length; applied when you release the slider. Enable Reverb to hear the effect.</p>
       <label for="camera">Camera</label>
       <select id="camera">
@@ -33,12 +33,12 @@
         <option value="environment">Rear</option>
       </select>
       <p id="camera-error" class="hint" role="status"></p>
-      <label for="threshold">Brightness threshold <output id="threshold-value">160</output></label>
-      <input id="threshold" type="range" min="0" max="255" value="160" />
-      <label for="min-size">Minimum blob size <output id="min-size-value">80 px</output></label>
-      <input id="min-size" type="range" min="10" max="2000" step="10" value="80" />
-      <label for="max-blobs">Max blobs <output id="max-blobs-value">32</output></label>
-      <input id="max-blobs" type="range" min="1" max="256" step="1" value="32" />
+      <label for="threshold">Brightness threshold <output id="threshold-value">130</output></label>
+      <input id="threshold" type="range" min="0" max="255" value="130" />
+      <label for="min-size">Minimum blob size <output id="min-size-value">240 px</output></label>
+      <input id="min-size" type="range" min="10" max="2000" step="10" value="240" />
+      <label for="max-blobs">Max blobs <output id="max-blobs-value">80</output></label>
+      <input id="max-blobs" type="range" min="1" max="256" step="1" value="80" />
       <label for="preview">Preview</label>
       <select id="preview">
         <option value="webcam">Webcam</option>
