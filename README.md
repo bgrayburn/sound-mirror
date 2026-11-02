@@ -21,9 +21,12 @@ webcams generally do not offer a rear-facing camera.
 - Ignore regions smaller than the minimum pixel count; play the largest regions
   up to **Max blobs** (1–256, default 32). The slider updates live. High limits
   may reduce processing speed, especially on mobile devices.
-- Measure average RGB from the original, unblurred pixels within each region.
-  Convert that average to hue and map it logarithmically from 110 to 1,760 Hz.
-  Low-saturation colors (including gray and white) use 440 Hz.
+- Measure hue from the original, unblurred pixels within each region. Ignore
+  pixels below 12% saturation and circular-average the remaining hues, weighted
+  by saturation; white highlights no longer wash out colorful pixels. Map hue
+  logarithmically from 110 to 1,760 Hz. Regions with too little usable color
+  (average saturation contribution below 1%) or conflicting hues with no clear
+  direction use 440 Hz, as do gray and white regions.
 - Set each sine oscillator's amplitude to the region's original mean grayscale
   intensity divided by 255: the intensity integral divided by region size.
   Area does not otherwise affect volume. Master gain and a compressor keep the
