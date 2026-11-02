@@ -1,6 +1,6 @@
 const ANALYSIS_WIDTH = 320;
 const ANALYSIS_HEIGHT = 240;
-const FALLBACK_FREQUENCY = 440;
+const FALLBACK_FREQUENCY = 220;
 
 // OpenCV's script and its WebAssembly runtime finish loading separately.
 async function loadOpenCV() {
@@ -55,7 +55,12 @@ function blobToFrequency(pixels, labels, label) {
   // Require some usable color and a coherent hue, rather than amplifying noise.
   if (!count || weight / count < 0.01 || Math.hypot(x, y) < weight * 0.1) return FALLBACK_FREQUENCY;
   const hue = ((Math.atan2(y, x) / (2 * Math.PI)) + 1) % 1;
-  return 110 * Math.pow(1760 / 110, hue);
+  return 55 * Math.pow(880 / 55, hue);
+}
+
+function softenedAmplitude(magnitude, frequency) {
+  // Leave lower notes alone; taper higher notes by 3 dB per octave above A3.
+  return magnitude * Math.min(1, Math.sqrt(220 / frequency));
 }
 
 new p5((p) => {
@@ -406,7 +411,7 @@ new p5((p) => {
       const old = matches.get(index);
       const track = { ...blob, id: old?.id ?? nextTrackId++, voice: old?.voice ?? createVoice(), seen: now };
       track.voice.oscillator.frequency.setTargetAtTime(blob.frequency, audio.currentTime, 0.08);
-      track.voice.gain.gain.setTargetAtTime(blob.magnitude, audio.currentTime, 0.06);
+      track.voice.gain.gain.setTargetAtTime(softenedAmplitude(blob.magnitude, blob.frequency), audio.currentTime, 0.06);
       return track;
     });
     for (const track of tracks) {
