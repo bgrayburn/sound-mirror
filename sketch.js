@@ -154,7 +154,7 @@ new p5((p) => {
       document.getElementById("room-size-value").value = `${Number(ui["room-size"].value).toFixed(1)} s`;
     });
     ui["room-size"].addEventListener("change", () => {
-      if (audio && audio.state !== "closed") replaceReverbRoom();
+      if (mix && reverbGain && audio && audio.state !== "closed") replaceReverbRoom();
     });
     document.addEventListener("visibilitychange", () => {
       if (!audio) return;
@@ -482,6 +482,8 @@ new p5((p) => {
       path.gain.disconnect();
     }
     reverbPaths.clear();
+    mix = null;
+    reverbGain = null;
     if (audio && audio.state !== "closed") audio.close();
     ui.mute.disabled = true;
     ui.reverb.disabled = true;
