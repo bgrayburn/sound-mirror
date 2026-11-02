@@ -27,17 +27,35 @@ async function loadOpenCV() {
   ]);
 }
 
-function colorToFrequency(color) {
-  const [red, green, blue] = color.map((value) => value / 255);
-  const high = Math.max(red, green, blue);
-  const low = Math.min(red, green, blue);
-  const delta = high - low;
-  if (high === 0 || delta / high < 0.12) return FALLBACK_FREQUENCY;
-  let hue;
-  if (high === red) hue = ((green - blue) / delta + 6) % 6;
-  else if (high === green) hue = (blue - red) / delta + 2;
-  else hue = (red - green) / delta + 4;
-  return 110 * Math.pow(1760 / 110, hue / 6);
+function blobToFrequency(pixels, labels, label) {
+  let x = 0;
+  let y = 0;
+  let weight = 0;
+  let count = 0;
+  for (let i = 0; i < labels.length; i++) {
+    if (labels[i] !== label) continue;
+    count++;
+    const red = pixels[i * 4] / 255;
+    const green = pixels[i * 4 + 1] / 255;
+    const blue = pixels[i * 4 + 2] / 255;
+    const high = Math.max(red, green, blue);
+    const low = Math.min(red, green, blue);
+    const delta = high - low;
+    const saturation = high === 0 ? 0 : delta / high;
+    if (saturation < 0.12) continue;
+    let hue;
+    if (high === red) hue = ((green - blue) / delta + 6) % 6;
+    else if (high === green) hue = (blue - red) / delta + 2;
+    else hue = (red - green) / delta + 4;
+    const angle = hue * Math.PI / 3;
+    x += Math.cos(angle) * saturation;
+    y += Math.sin(angle) * saturation;
+    weight += saturation;
+  }
+  // Require some usable color and a coherent hue, rather than amplifying noise.
+  if (!count || weight / count < 0.01 || Math.hypot(x, y) < weight * 0.1) return FALLBACK_FREQUENCY;
+  const hue = ((Math.atan2(y, x) / (2 * Math.PI)) + 1) % 1;
+  return 110 * Math.pow(1760 / 110, hue);
 }
 
 new p5((p) => {
@@ -328,7 +346,7 @@ new p5((p) => {
             color,
             size: candidate.size,
             magnitude,
-            frequency: colorToFrequency(color),
+            frequency: blobToFrequency(mats.rgba.data, mats.labels.data32S, candidate.label),
           });
         } finally {
           contour.delete();
