@@ -37,6 +37,10 @@ tracking ID, target frequency, and normalized intensity. Controls adjust the
 brightness threshold and minimum blob size. **Mute** leaves the visual analysis
 running.
 
+Toggle **Reverb** to add a soft, two-second room-like decay (off by default).
+The effect fades in and out smoothly, and **Mute** silences both the direct
+sound and the reverb tail.
+
 ## Inspecting blob detection
 
 Use **Preview → Threshold** to see exactly which pixels pass the blurred
